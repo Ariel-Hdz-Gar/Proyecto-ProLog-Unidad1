@@ -41,21 +41,36 @@ def registrar_perrito(
     foto: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
+    # 1. Verificar idempotencia
     check_query = text("SELECT id_perrito FROM perritos WHERE idempotency_key = :key")
     existente = db.execute(check_query, {"key": idempotency_key}).fetchone()
     if existente:
         return {"mensaje": "Registro procesado previamente", "id_perrito": existente[0]}
 
-    if not archivos.es_imagen_valida(foto.filename, foto.content_type):
-        raise HTTPException(status_code=400, detail="Formato no válido")
-    nombre_foto = archivos.guardar_foto(foto)
+    # 2. Validar y guardar la imagen
+    if not archivos.es_imagen_valida(foto.content_type):
+        raise HTTPException(status_code=400, detail="Formato de imagen inválido. Solo JPG, PNG o WEBP.")
+    
+    nombre_seguro = archivos.guardar_foto(foto)
 
+    # 3. Insertar perrito
     insert_perrito = text("""
         INSERT INTO perritos (idempotency_key, nombre, id_raza, id_color_principal, foto_ruta, latitud, longitud)
         VALUES (:key, :nombre, :raza, :color, :foto, :lat, :lon)
-        RETURNING id_perrito""")
-    nuevo_id = db.execute(insert_perrito, {"key": idempotency_key, "nombre": nombre, "raza": id_raza, "color": id_color_principal, "foto": nombre_foto, "lat": latitud, "lon": longitud}).scalar()
+        RETURNING id_perrito
+    """)
+    
+    nuevo_id = db.execute(insert_perrito, {
+        "key": idempotency_key, 
+        "nombre": nombre, 
+        "raza": id_raza, 
+        "color": id_color_principal, 
+        "foto": nombre_seguro, # Variable corregida
+        "lat": latitud, 
+        "lon": longitud
+    }).scalar()
 
+    # 4. Insertar colores adicionales
     if colores_adicionales:
         insert_colores = text("INSERT INTO perrito_colores_adicionales (id_perrito, id_color) VALUES (:p_id, :c_id)")
         for color_id in colores_adicionales[:2]: # Max 2 colores adicionales
@@ -63,4 +78,8 @@ def registrar_perrito(
 
     db.commit()
     
-    return {"mensaje": "Perrito registrado con éxito", "id_perrito": nuevo_id}
+    return {
+        "mensaje": "Perrito registrado exitosamente", 
+        "id_perrito": nuevo_id,
+        "foto_guardada": nombre_seguro
+    }
