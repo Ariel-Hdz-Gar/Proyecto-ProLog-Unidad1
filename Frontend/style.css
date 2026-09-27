@@ -1,0 +1,307 @@
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --bg-color: #f8fafc;
+  --card-bg: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --danger: #ef4444;
+  --radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  padding-bottom: 70px; /* Espacio para que el mapa/contenido no tape la barra inferior */
+}
+
+/* Header superior */
+.topbar {
+  background: var(--card-bg);
+  padding: 16px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 700;
+  font-size: 1.2rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.brand {
+  color: var(--primary);
+}
+
+/* Navegación por pestañas */
+.tabs {
+  display: flex;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px 8px;
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* Vistas */
+main {
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+}
+
+.hint {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+.hint.small {
+  margin-bottom: 0;
+}
+
+/* Formularios estilizados para Móvil */
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.field span {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+.req {
+  color: var(--danger);
+}
+
+input[type="text"],
+select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  background-color: var(--card-bg);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus,
+select:focus {
+  border-color: var(--primary);
+}
+
+/* Input de foto especial */
+input[type="file"] {
+  padding: 8px;
+  background: var(--card-bg);
+  border: 1px dashed var(--primary);
+  border-radius: var(--radius);
+}
+
+.preview {
+  margin-top: 10px;
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
+/* Colores extras */
+.color-extra-row {
+  display: flex;
+  gap: 10px;
+}
+
+/* Mapas */
+.mini-map {
+  height: 200px;
+  border-radius: var(--radius);
+  margin-top: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.full-map {
+  height: calc(100vh - 160px);
+  border-radius: var(--radius);
+}
+
+/* Botones */
+.btn-primary {
+  width: 100%;
+  background-color: var(--primary);
+  color: white;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 10px;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn-secondary {
+  background-color: #e0e7ff;
+  color: var(--primary-dark);
+  padding: 10px 14px;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.error {
+  display: block;
+  color: var(--danger);
+  font-size: 0.8rem;
+  margin-top: 4px;
+  min-height: 1em;
+}
+
+/* Mensajes de estado (faltaban en el rediseño) */
+.msg {
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+.msg.ok {
+  background: #dcfce7;
+  color: #166534;
+}
+.msg.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Tarjetas para la Vista de Lista */
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-perrito {
+  display: flex;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 12px;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  align-items: center;
+  cursor: pointer;
+}
+
+.card-perrito img {
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--border-color);
+}
+
+.card-info { min-width: 0; }
+.card-info h3 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.card-info p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Modal de detalle */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 16px;
+}
+
+/* FIX: sin esto, el atributo "hidden" del HTML no hace nada porque
+   la regla .modal de arriba (display: flex) le gana. Con esta regla,
+   cuando el elemento tenga el atributo hidden, SÍ se oculta de verdad. */
+.modal[hidden] {
+  display: none;
+}
+
+.modal-content {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: var(--radius);
+  max-width: 400px;
+  width: 100%;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.modal-content img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  background: var(--border-color);
+}
