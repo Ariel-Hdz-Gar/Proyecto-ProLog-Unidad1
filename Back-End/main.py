@@ -23,4 +23,4 @@ app.mount("/api/imagenes", StaticFiles(directory=ruta_imagenes), name="imagenes"
 def home():
     return {"mensaje": "Api Funcional"}
 
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+app.mount("/", StaticFiles(directory="Frontend", html=True), name="Frontend")
