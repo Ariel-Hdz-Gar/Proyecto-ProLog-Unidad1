@@ -19,8 +19,4 @@ app.include_router(perritos_router)
 ruta_imagenes = os.getenv("RUTA_IMAGENES", "/tmp/perritos_fotos")
 app.mount("/api/imagenes", StaticFiles(directory=ruta_imagenes), name="imagenes")
 
-@app.get("/")
-def home():
-    return {"mensaje": "Api Funcional"}
-
-app.mount("/", StaticFiles(directory="Frontend", html=True), name="Frontend")
+app.mount("/", StaticFiles(directory="/home/ubuntu/Proyecto-ProLog-Unidad1/Frontend", html=True), name="Frontend")
