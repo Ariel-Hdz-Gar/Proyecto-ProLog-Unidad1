@@ -1,6 +1,6 @@
 import os
-from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from rutas import router as perritos_router
 
@@ -22,3 +22,5 @@ app.mount("/api/imagenes", StaticFiles(directory=ruta_imagenes), name="imagenes"
 @app.get("/")
 def home():
     return {"mensaje": "Api Funcional"}
+
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
