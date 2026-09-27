@@ -1,5 +1,11 @@
 # Registro de Perritos de la Calle
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+BDD-
+=======
+>>>>>>> Stashed changes
 Proyecto 1 — Programación Lógica y Funcional — Prof. Daniel Varela
 
 App para registrar perritos callejeros: foto, nombre, características y
@@ -42,6 +48,11 @@ reales a la carpeta de `RUTA_IMAGENES`.
 
 ```bash
 cd Back-End
+<<<<<<< Updated upstream
+=======
+python3 -m venv venv
+source venv/bin/activate
+>>>>>>> Stashed changes
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
@@ -58,7 +69,11 @@ backend.
 `Frontend/config.js` tiene la URL del backend:
 
 ```js
+<<<<<<< Updated upstream
 const API_BASE = "http://localhost:8000";
+=======
+const API_BASE = "http://100.52.230.125:8000";
+>>>>>>> Stashed changes
 ```
 
 ## Probarlo desde celular en la misma red
@@ -70,6 +85,10 @@ HTTPS o localhost) — para probarlas de verdad hace falta HTTPS, ya sea la
 versión desplegada o un túnel (ngrok).
 
 ## Modelo de datos
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
 ```mermaid
 erDiagram
@@ -105,6 +124,11 @@ erDiagram
         int id_color PK, FK
     }
 ```
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
 
 ## Endpoints
 
@@ -166,6 +190,7 @@ crear un registro nuevo.
 *(pendiente)*
 
 ## Despliegue
+<<<<<<< Updated upstream
 
 Backend corriendo en AWS en `http://100.52.230.125:8000`, sin HTTPS todavía —
 falta dominio y certificado. Sin eso, cámara y ubicación no van a funcionar
@@ -173,3 +198,11 @@ desde celular contra esa URL.
 
 Falta documentar: cómo se obtiene el dominio/certificado, variables entre
 local y producción, puertos abiertos, respaldo de base e imágenes.
+=======
+El backend está publicado en una instancia EC2 de AWS con Ubuntu. La arquitectura de producción funciona de la siguiente manera:
+
+Uvicorn + Systemd: La API de FastAPI se ejecuta en el puerto 8000 y está expuesta a internet directamente mediante la IP pública del servidor. Para mantenerla en producción de manera estable, se configuró un servicio nativo de Linux (systemd) que garantiza que la aplicación corra permanentemente en segundo plano y arranque de forma automática si la máquina se reinicia.
+
+Conexión Frontend-Backend: El frontend está configurado para apuntar a la URL pública del backend ([http://100.52.230.125:8000](http://100.52.230.125:8000)). Debido a que el despliegue opera sobre HTTP plano y los navegadores bloquean el acceso al GPS sin un certificado HTTPS, la presentación del frontend se ejecuta desde un entorno local (localhost). Esto aprovecha la excepción de seguridad de los navegadores, permitiendo el uso completo del hardware (GPS/Cámara) mientras se consumen los datos reales de la base de datos alojada en AWS.
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes

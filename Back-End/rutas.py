@@ -90,3 +90,9 @@ def obtener_todos_los_perritos(db: Session = Depends(get_db)):
     resultados = db.execute(query).mappings().all()
 
     return [dict(perrito) for perrito in resultados]
+
+@router.get("/api/estadisticas")
+def estadisticas_razas(db: Session = Depends(get_db)):
+    query = text("SELECT id_raza, COUNT(*) as total FROM perritos GROUP BY id_raza;")
+    resultados = db.execute(query).mappings().all()
+    return [dict(r) for r in resultados]
