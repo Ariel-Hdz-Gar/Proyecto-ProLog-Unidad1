@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro de Perritos de la Calle</title>
+
+  <!-- Leaflet (mapa, sin API key) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <span class="brand">🐾 Perritos de la Calle</span>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab-btn active" data-view="vista-registro">Registrar</button>
+  <button class="tab-btn" data-view="vista-mapa">Mapa</button>
+  <button class="tab-btn" data-view="vista-lista">Lista</button>
+</nav>
+
+<main>
+
+  <!-- ===================== VISTA: REGISTRO ===================== -->
+  <section id="vista-registro" class="view active">
+    <h1>Registrar un perrito</h1>
+    <p class="hint">Toma o sube una foto, marca dónde lo viste y guarda su registro.</p>
+
+    <div id="registro-msg" class="msg" hidden></div>
+
+    <form id="form-registro" novalidate>
+
+      <div class="field">
+        <span>Foto <span class="req">*</span></span>
+        <input type="file" id="input-foto" name="foto" accept="image/jpeg,image/png,image/webp" capture="environment" required>
+        <span class="error" id="err-foto"></span>
+        <img id="preview-foto" class="preview" hidden alt="Vista previa de la foto">
+      </div>
+
+      <div class="field">
+        <span>Nombre <span class="req">*</span></span>
+        <input type="text" id="input-nombre" name="nombre" placeholder="Ej. Firulais" required>
+        <span class="error" id="err-nombre"></span>
+      </div>
+
+      <div class="field">
+        <span>Raza</span>
+        <select id="input-raza" name="id_raza">
+          <option value="">Cargando catálogo…</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <span>Color principal <span class="req">*</span></span>
+        <select id="input-color-principal" name="id_color_principal" required>
+          <option value="">Cargando catálogo…</option>
+        </select>
+        <span class="error" id="err-color-principal"></span>
+      </div>
+
+      <div class="field">
+        <span>Colores adicionales (opcional, máx 2)</span>
+        <div class="color-extra-row">
+          <select id="input-color-extra-1"><option value="">Ninguno</option></select>
+          <select id="input-color-extra-2"><option value="">Ninguno</option></select>
+        </div>
+        <span class="error" id="err-colores-extra"></span>
+      </div>
+
+      <div class="field">
+        <span>Ubicación <span class="req">*</span></span>
+        <button type="button" id="btn-mi-ubicacion" class="btn-secondary">📍 Usar mi ubicación actual</button>
+        <p class="hint small" style="margin-top: 6px;">O toca en el mapa la posición exacta.</p>
+        <div id="mapa-registro" class="mini-map"></div>
+        <span class="error" id="err-ubicacion"></span>
+      </div>
+
+      <button type="submit" id="btn-enviar" class="btn-primary">Guardar registro</button>
+    </form>
+  </section>
+
+  <!-- ===================== VISTA: MAPA GENERAL ===================== -->
+  <section id="vista-mapa" class="view">
+    <h1>Mapa de perritos registrados</h1>
+    <div id="mapa-general" class="full-map"></div>
+  </section>
+
+  <!-- ===================== VISTA: LISTA ===================== -->
+  <section id="vista-lista" class="view">
+    <h1>Perritos registrados</h1>
+    <div id="lista-msg" class="msg" hidden></div>
+    <div id="lista-perritos" class="card-list"></div>
+  </section>
+
+</main>
+
+<!-- ===================== MODAL DETALLE ===================== -->
+<div id="modal-detalle" class="modal" hidden>
+  <div class="modal-content">
+    <button id="cerrar-modal" class="close-btn" aria-label="Cerrar">✕</button>
+    <img id="detalle-foto" alt="Foto del perrito">
+    <h2 id="detalle-nombre"></h2>
+    <p><strong>Raza:</strong> <span id="detalle-raza"></span></p>
+    <p><strong>Colores:</strong> <span id="detalle-colores"></span></p>
+    <p><strong>Registrado:</strong> <span id="detalle-fecha"></span></p>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
