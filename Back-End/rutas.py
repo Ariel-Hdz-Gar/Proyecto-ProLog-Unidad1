@@ -83,3 +83,10 @@ def registrar_perrito(
         "id_perrito": nuevo_id,
         "foto_guardada": nombre_seguro
     }
+
+@router.get("/api/perritos")
+def obtener_todos_los_perritos(db: Session = Depends(get_db)):
+    query = text("SELECT * FROM perritos;")
+    resultados = db.execute(query).mappings().all()
+
+    return [dict(perrito) for perrito in resultados]
