@@ -2,8 +2,6 @@ import os
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-# Se leen las variables de entorno para no subir contraseñas al repositorio,
-# cumpliendo con la regla de usar .env y .gitignore
 DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "Ark_games554")
 DB_HOST = os.getenv("DB_HOST", "localhost")

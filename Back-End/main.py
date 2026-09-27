@@ -1,3 +1,5 @@
+import os
+from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from rutas import router as perritos_router
@@ -13,6 +15,9 @@ app.add_middleware(
 )
 
 app.include_router(perritos_router)
+
+ruta_imagenes = os.getenv("RUTA_IMAGENES", "/tmp/perritos_fotos")
+app.mount("/api/imagenes", StaticFiles(directory=ruta_imagenes), name="imagenes")
 
 @app.get("/")
 def home():
