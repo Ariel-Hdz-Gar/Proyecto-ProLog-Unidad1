@@ -2,9 +2,20 @@
 // app.js — Frontend de "Registro de Perritos de la Calle"
 // ============================================================
 // Depende de config.js (variable API_BASE) y Leaflet (cargado en index.html)
+window.onerror = function(mensaje, fuente, linea) {
+    alert("Error en línea " + linea + ": " + mensaje);
+};
 
+function generarIdSeguro() {
+    // Si el navegador permite la función original (localhost o HTTPS), la usamos:
+    if (window.crypto && window.crypto.randomUUID) {
+        return window.crypto.randomUUID();
+    }
+    // Si el navegador la bloquea (celular por HTTP), armamos un ID alternativo rápido:
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
+}
 // ---------- Estado global ----------
-let idempotencyKey = crypto.randomUUID();   // se regenera solo tras un envío exitoso
+let idempotencyKey = generarIdSeguro();   // se regenera solo tras un envío exitoso
 let catalogoRazas = [];
 let catalogoColores = [];
 let ubicacionSeleccionada = null;           // { lat, lng }
@@ -136,10 +147,7 @@ function iniciarMapaRegistro() {
 }
 
 document.getElementById("btn-mi-ubicacion").addEventListener("click", () => {
-  if (!navigator.geolocation) {
-    mostrarMensaje("registro-msg", "Tu navegador no soporta geolocalización.", "error");
-    return;
-  }
+  if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       const { latitude, longitude } = pos.coords;
@@ -154,6 +162,11 @@ document.getElementById("btn-mi-ubicacion").addEventListener("click", () => {
         "Recuerda: esto solo funciona en HTTPS o localhost.", "error");
     }
   );
+} else {
+  // Entra aquí cuando el celular elimina el GPS por estar en HTTP
+  console.warn("GPS desactivado por falta de HTTPS.");
+  mostrarMensaje("registro-msg", "El navegador bloqueó el GPS automático. Mueve el pin en el mapa manualmente.", "error");
+}
 });
 
 // ============================================================
@@ -164,6 +177,10 @@ const form = document.getElementById("form-registro");
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   limpiarErrores();
+
+  if (!idempotencyKey) {
+    idempotencyKey = generarIdSeguro();
+  }
 
   const nombre = document.getElementById("input-nombre").value.trim();
   const idRaza = document.getElementById("input-raza").value;
@@ -221,7 +238,7 @@ form.addEventListener("submit", async (e) => {
     mostrarMensaje("registro-msg", "¡Perrito registrado con éxito!", "ok");
     form.reset();
     previewFoto.hidden = true;
-    idempotencyKey = crypto.randomUUID(); // nueva key para el siguiente registro
+    idempotencyKey = generarIdSeguro(); // nueva key para el siguiente registro
     ubicacionSeleccionada = null;
     perritosCache = null; // fuerza a recargar la lista/mapa con el nuevo perrito
   } catch (err) {
