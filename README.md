@@ -153,7 +153,13 @@ crear un registro nuevo.
 
 ## Capturas
 
-*(pendiente)*
+<img width="500" height="1300" alt="image" src="https://github.com/user-attachments/assets/f11eb329-5f22-49ce-afcf-c440398c868a" />
+<img width="600" height="1300" alt="image" src="https://github.com/user-attachments/assets/c66dc925-6f85-4644-8348-12979934a9bc" />
+<img width="600" height="1300" alt="image" src="https://github.com/user-attachments/assets/7acf08bc-1fd6-465d-8f91-82dc023740c3" />
+<img width="600" height="1300" alt="image" src="https://github.com/user-attachments/assets/95ea49c5-9fd0-4fca-9375-b72cd65babbc" />
+
+
+
 
 ## Despliegue
 Backend corriendo en AWS en `http://100.52.230.125:8000`
