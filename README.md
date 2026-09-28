@@ -40,10 +40,6 @@ psql -U postgres -d perritos_db -f database/schema.sql
 psql -U postgres -d perritos_db -f database/seeds.sql
 ```
 
-Los 15 perritos de prueba de seeds.sql referencian fotos que no vienen en el
-repo, así que van a salir con la imagen rota hasta que se agreguen las fotos
-reales a la carpeta de `RUTA_IMAGENES`.
-
 ### Backend
 
 ```bash
@@ -144,10 +140,6 @@ erDiagram
 `longitud`, `id_color_principal`, `id_raza` (opcional), `colores_adicionales`
 (0 a 2), `foto`.
 
-Falta: `GET /api/perritos` todavía no regresa los colores adicionales (falta
-un JOIN con `perrito_colores_adicionales`), y falta al menos una consulta con
-agregación.
-
 ## Problemas comunes
 
 | Problema | Solución |
@@ -159,8 +151,6 @@ agregación.
 | Cámara/ubicación no piden permiso en el celular | Falta HTTPS |
 
 ## Paradigmas
-
-*(Falta la parte de backend/base de datos: SQL declarativo, JOIN, agregación)*
 
 **Declarativo:** `index.html` y `style.css` describen qué debe verse, no cómo
 dibujarlo — eso lo resuelve el navegador.
@@ -192,12 +182,7 @@ crear un registro nuevo.
 ## Despliegue
 <<<<<<< Updated upstream
 
-Backend corriendo en AWS en `http://100.52.230.125:8000`, sin HTTPS todavía —
-falta dominio y certificado. Sin eso, cámara y ubicación no van a funcionar
-desde celular contra esa URL.
-
-Falta documentar: cómo se obtiene el dominio/certificado, variables entre
-local y producción, puertos abiertos, respaldo de base e imágenes.
+Backend corriendo en AWS en `http://100.52.230.125:8000`
 =======
 El backend está publicado en una instancia EC2 de AWS con Ubuntu. La arquitectura de producción funciona de la siguiente manera:
 
