@@ -91,7 +91,7 @@ git clone https://github.com/Ariel-Hdz-Gar/Proyecto-ProLog-Unidad1.git
 cd Proyecto-ProLog-Unidad1
 ```
 
-> **💡 Tip para Windows:** Si al ejecutar el comando te sale el error *"git no se reconoce"*, significa que no tienes Git instalado. Puedes instalarlo al instante desde tu consola ejecutando: `winget install Git.Git` (una vez que termine, cierra y vuelve a abrir la terminal).
+> **💡 Tip para Windows:** Si al ejecutar el comando te sale el error *"git no se reconoce"*, significa que no tienes Git instalado. Puedes instalarlo desde tu consola ejecutando `winget install Git.Git`, o descargarlo directamente desde [git-scm.com/download/win](https://git-scm.com/download/win). Una vez instalado, cierra la terminal y abre una nueva.
 
 ---
 ## 4. Base de Datos: Creación, Esquema y Semillas (DBA)
