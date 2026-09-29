@@ -28,82 +28,93 @@ Este proyecto se ejecuta **estrictamente sin contenedores Docker** (sin `Dockerf
 
 ---
 
-## 3. Manual de Instalación y Configuración de PostgreSQL (Paso a Paso)
+## 3. Manual de Instalación y Configuración: Módulo de Base de Datos
 
-### Paso 1: Descargar e Instalar PostgreSQL
+Este manual documenta el procedimiento completo para preparar el entorno de PostgreSQL desde cero, con especial enfoque en Windows (resolviendo problemas comunes de consola y variables de entorno).
 
-#### En Windows:
-1. Descargar el instalador oficial de PostgreSQL desde [postgresql.org/download/windows](https://www.postgresql.org/download/windows/).
-2. Ejecutar el instalador (`postgresql-16.x-windows-x64.exe`).
-3. Durante el asistente, asignar una contraseña al usuario administrador `postgres` (ejemplo: `postgres`).
-4. Conservar el puerto por defecto `5432`.
-5. Completar la instalación.
+### Paso 1: Descarga e Instalación de PostgreSQL
+
+#### Para usuarios de Windows (10/11 64-bit):
+1. Ingresar al portal oficial: [postgresql.org/download/windows/](https://www.postgresql.org/download/windows/)
+2. Hacer clic en "Download the installer" (certificado por EDB) y seleccionar la versión correspondiente a Windows (x86-64), versión 16+ (ej. 18.x).
+3. Ejecutar el archivo instalador `.exe`.
+4. Durante el asistente de instalación:
+   - **Directorio de instalación y datos:** Mantener las rutas por defecto (ej. `C:\Program Files\PostgreSQL\18\data`).
+   - **Componentes:** Seleccionar *PostgreSQL Server* y *Command Line Tools*.
+   - **Contraseña:** Definir una contraseña segura para el superusuario `postgres` y guardarla (se ocupará después).
+   - **Puerto:** Confirmar el puerto por defecto `5432`.
+   - **Locale:** Seleccionar *Default locale* o *Spanish, Mexico*.
+5. Al finalizar, desmarcar la casilla de *Stack Builder* y hacer clic en **Finish**. *(El instalador de EDB creará el clúster e iniciará el servicio de Windows automáticamente, por lo que NO es necesario usar `initdb` ni `pg_ctl`)*.
 
 #### En Linux (Ubuntu / Debian):
 ```bash
-sudo apt update
-sudo apt install -y postgresql postgresql-contrib
+sudo apt update && sudo apt install -y postgresql postgresql-contrib
 ```
+*(El servicio se inicia automáticamente).*
 
 #### En macOS (con Homebrew):
 ```bash
 brew install postgresql@16
-```
-
----
-
-### Paso 2: Iniciar y Verificar el Servicio de PostgreSQL
-
-#### En Windows:
-* **Opción A (Interfaz Gráfica):** Abrir `services.msc`, buscar `postgresql-x64-16` y hacer clic en **Iniciar**.
-* **Opción B (PowerShell como Administrador):**
-  ```powershell
-  net start postgresql-x64-16
-  ```
-
-#### En Linux:
-```bash
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
-sudo systemctl status postgresql
-```
-
-#### En macOS:
-```bash
 brew services start postgresql@16
 ```
 
 ---
 
-### Paso 3: Clonar el Repositorio
+### Paso 2: Configuración de Variables de Entorno en Windows (Crucial)
 
-```bash
-git clone https://github.com/Ariel-Hdz-Gar/Proyecto-ProLog-Unidad1.git
-cd Proyecto-ProLog-Unidad1
+Para evitar el error de que *"psql no se reconoce como un comando"*, se debe agregar a las variables del sistema para invocarlo desde cualquier terminal:
+1. Presionar la tecla Windows, escribir **"Variables de entorno"** y seleccionar **"Editar las variables de entorno del sistema"**.
+2. Hacer clic en el botón inferior **"Variables de entorno..."**.
+3. En el apartado inferior (**Variables del sistema**), buscar y seleccionar la variable **Path** y hacer clic en **"Editar..."**.
+4. Hacer clic en **"Nuevo"** y pegar la ruta hacia la carpeta `bin` de tu instalación. Ejemplo:
+   `C:\Program Files\PostgreSQL\18\bin` *(Cambia el "18" y "PostgreSQL" según tu versión)*.
+5. Hacer clic en **Aceptar** en todas las ventanas.
+6. **Importante:** Cierra y vuelve a abrir cualquier ventana de terminal (CMD o PowerShell) para que reconozca los cambios.
+7. Verifica que funciona ejecutando: `psql --version`
+
+---
+
+### Paso 3: Corrección de Codificación en Consola (Acentos y Caracteres Especiales)
+
+El símbolo del sistema de Windows utiliza por defecto una página de códigos antigua (850 o 1252), lo que produce errores visuales en palabras con acento o eñes (ej. Due±o). Antes de interactuar con la consola de Postgres, cambia la terminal a UTF-8:
+```cmd
+chcp 65001
 ```
 
 ---
 
 ## 4. Base de Datos: Creación, Esquema y Semillas (DBA)
 
+Abre una terminal (CMD o PowerShell) **en la raíz del repositorio** clonado (`Proyecto-ProLog-Unidad1`) y ejecuta en orden:
+
 ### Paso 4: Crear la Base de Datos `perritos_db`
 
 ```bash
 createdb -U postgres perritos_db
 ```
-*(O desde `psql -U postgres`: `CREATE DATABASE perritos_db;`)*
+*(Si te lo pide, ingresa la contraseña que definiste en la instalación).*
 
 ### Paso 5: Cargar el Esquema DDL (Tablas e Índices)
 
+Este comando lee el archivo SQL y crea la estructura de las tablas en la BDD recién creada:
 ```bash
 psql -U postgres -d perritos_db -f database/schema.sql
 ```
 
-### Paso 6: Cargar Catálogos (10+ Razas, 10+ Colores) y 15 Perritos de Prueba
+### Paso 6: Cargar Catálogos (Razas, Colores) y Perritos de Prueba
 
+Este comando inserta los 10 colores, 10 razas y 15 registros de prueba con la tabla pivote M:N:
 ```bash
 psql -U postgres -d perritos_db -f database/seeds.sql
 ```
+
+### Paso 7: Verificación de Integridad (Opcional)
+
+Para comprobar que todo se cargó correctamente, entra a la base de datos:
+```bash
+psql -U postgres -d perritos_db
+```
+Y ejecuta `\dt` para ver el listado de las 4 tablas principales (`razas`, `colores`, `perritos`, `perrito_colores_adicionales`). Escribe `\q` para salir.
 
 ---
 
