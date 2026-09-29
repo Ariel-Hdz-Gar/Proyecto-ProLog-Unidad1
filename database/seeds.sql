@@ -1,3 +1,5 @@
+SET client_encoding = 'UTF8';
+
 -- Catálogo de Razas
 INSERT INTO razas (nombre) VALUES 
 ('Sin raza definida / criollo'),

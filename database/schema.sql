@@ -1,3 +1,5 @@
+SET client_encoding = 'UTF8';
+
 -- Eliminación limpia si se requiere reiniciar
 DROP TABLE IF EXISTS perrito_colores_adicionales CASCADE;
 DROP TABLE IF EXISTS perritos CASCADE;
