@@ -107,6 +107,7 @@ Este comando inserta los 10 colores, 10 razas y 15 registros de prueba con la ta
 ```bash
 psql -U postgres -d perritos_db -f database/seeds.sql
 ```
+> **⚠️ Importante para las imágenes de prueba:** El script `seeds.sql` enlaza los 15 perritos de prueba con la imagen de muestra que viene en la carpeta `Images/` del repositorio. Si configuras la variable `RUTA_IMAGENES` hacia una carpeta externa en tu PC (ej. `C:\uploads`), debes copiar manualmente el archivo `.webp` de la carpeta `Images/` hacia tu nueva carpeta externa para que el frontend no muestre errores 404 (imágenes rotas).
 
 ### Paso 7: Verificación de Integridad (Opcional)
 
