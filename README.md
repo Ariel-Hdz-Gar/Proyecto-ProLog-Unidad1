@@ -83,25 +83,34 @@ chcp 65001
 
 ---
 
+### Paso 4: Clonar el Repositorio
+
+Abre una terminal y clona el proyecto en tu computadora:
+```bash
+git clone https://github.com/Ariel-Hdz-Gar/Proyecto-ProLog-Unidad1.git
+cd Proyecto-ProLog-Unidad1
+```
+
+---
 ## 4. Base de Datos: Creación, Esquema y Semillas (DBA)
 
 Abre una terminal (CMD o PowerShell) **en la raíz del repositorio** clonado (`Proyecto-ProLog-Unidad1`) y ejecuta en orden:
 
-### Paso 4: Crear la Base de Datos `perritos_db`
+### Paso 5: Crear la Base de Datos `perritos_db`
 
 ```bash
 createdb -U postgres perritos_db
 ```
 *(Si te lo pide, ingresa la contraseña que definiste en la instalación).*
 
-### Paso 5: Cargar el Esquema DDL (Tablas e Índices)
+### Paso 6: Cargar el Esquema DDL (Tablas e Índices)
 
 Este comando lee el archivo SQL y crea la estructura de las tablas en la BDD recién creada:
 ```bash
 psql -U postgres -d perritos_db -f database/schema.sql
 ```
 
-### Paso 6: Cargar Catálogos (Razas, Colores) y Perritos de Prueba
+### Paso 7: Cargar Catálogos (Razas, Colores) y Perritos de Prueba
 
 Este comando inserta los 10 colores, 10 razas y 15 registros de prueba con la tabla pivote M:N:
 ```bash
@@ -109,7 +118,7 @@ psql -U postgres -d perritos_db -f database/seeds.sql
 ```
 > **⚠️ Importante para las imágenes de prueba:** El script `seeds.sql` enlaza los 15 perritos de prueba con la imagen de muestra que viene en la carpeta `Images/` del repositorio. Si configuras la variable `RUTA_IMAGENES` hacia una carpeta externa en tu PC (ej. `C:\uploads`), debes copiar manualmente el archivo `.webp` de la carpeta `Images/` hacia tu nueva carpeta externa para que el frontend no muestre errores 404 (imágenes rotas).
 
-### Paso 7: Verificación de Integridad (Opcional)
+### Paso 8: Verificación de Integridad (Opcional)
 
 Para comprobar que todo se cargó correctamente, entra a la base de datos:
 ```bash
