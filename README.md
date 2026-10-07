@@ -361,3 +361,5 @@ La aplicación se encuentra actualmente **publicada y operativa en una instancia
 
 3. **Acceso al Hardware (Cámara y GPS):**
    Dado que el servicio opera sobre HTTP y los navegadores bloquean el acceso al GPS y cámara por falta de HTTPS en IPs remotas, la demostración del frontend se ejecuta desde la máquina local (`localhost`), permitiendo el uso completo del hardware (Cámara/GPS) mientras interactúa en tiempo real con la base de datos de producción en AWS.
+
+
