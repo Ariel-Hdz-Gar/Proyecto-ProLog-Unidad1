@@ -1,0 +1,27 @@
+services:
+  bd:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: perritos
+      POSTGRES_PASSWORD: cambiar
+      POSTGRES_DB: perritos
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Más adelante agregaremos aquí los bloques para tu Backend, Frontend, Nginx y Cloudflare
+
+  herramientas:
+    image: elixir:1.18-alpine
+    profiles: ["herramientas"]
+    working_dir: /app
+    volumes:
+      - ./funcional:/app
+      - mix_cache:/root/.mix
+      - hex_cache:/root/.hex
+
+volumes:
+  pgdata:
+  mix_cache:
+  hex_cache:
