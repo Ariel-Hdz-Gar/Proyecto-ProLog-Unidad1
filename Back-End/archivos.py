@@ -3,7 +3,7 @@ import uuid
 import shutil
 from fastapi import UploadFile, HTTPException
 
-RUTA_IMAGENES = os.getenv("RUTA_IMAGENES", "../Images")
+RUTA_IMAGENES = os.getenv("RUTA_IMAGENES", "C:/uploads/perritos")
 
 def es_imagen_valida(content_type: str) -> bool:
     formatos_permitidos = ["image/jpeg", "image/png", "image/webp"]

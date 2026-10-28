@@ -19,7 +19,9 @@ app.add_middleware(
 
 app.include_router(perritos_router)
 
-ruta_imagenes = os.getenv("RUTA_IMAGENES", "../Images")
+ruta_imagenes = os.getenv("RUTA_IMAGENES", "C:/uploads/perritos")
+# Asegurar que el directorio exista para que FastAPI no arroje error al arrancar
+os.makedirs(ruta_imagenes, exist_ok=True)
 app.mount("/api/imagenes", StaticFiles(directory=ruta_imagenes), name="imagenes")
 
 #app.mount("/", StaticFiles(directory="/home/ubuntu/Proyecto-ProLog-Unidad1/Frontend", html=True), name="Frontend")
