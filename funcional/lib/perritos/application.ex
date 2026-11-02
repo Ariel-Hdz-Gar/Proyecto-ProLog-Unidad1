@@ -1,19 +1,22 @@
 defmodule Perritos.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
-  @moduledoc false
+  @moduledoc """
+  Arranca la infraestructura: conexión a la base de datos (Postgrex) y servidor HTTP (Bandit).
+  """
 
   use Application
 
   @impl true
   def start(_type, _args) do
     children = [
-      # Starts a worker by calling: Perritos.Worker.start_link(arg)
-      # {Perritos.Worker, arg}
+      {Postgrex,
+       name: :bd,
+       hostname: System.get_env("BD_HOST", "bd"),
+       username: System.get_env("BD_USUARIO", "perritos"),
+       password: System.get_env("BD_PASSWORD", "cambiar"),
+       database: System.get_env("BD_NOMBRE", "perritos")},
+      {Bandit, plug: Perritos.Router, port: 4000}
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Perritos.Supervisor]
     Supervisor.start_link(children, opts)
   end
