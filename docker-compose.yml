@@ -20,6 +20,8 @@ services:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@bd:5432/${DB_NAME}
     depends_on:
       - bd
+    volumes:
+      - ../Images:/Images
 
   frontend:
     build: ./Frontend # Asegúrate de que esta carpeta tenga el Dockerfile de tu HTML/JS
