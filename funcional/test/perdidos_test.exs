@@ -37,7 +37,6 @@ defmodule Perritos.PerdidosTest do
     fecha_avistamiento = ~N[2026-10-25 15:30:00]
     assert Perdidos.dias_transcurridos(fecha_avistamiento, @ahora) == 10
   end
-giy
   test "caso borde: límite exacto de días" do
     # Exactamente 7 días antes
     perro_exacto = perro(3, "Pulgoso", ~N[2026-10-28 12:00:00])
