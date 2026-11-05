@@ -363,3 +363,117 @@ La aplicación se encuentra actualmente **publicada y operativa en una instancia
    Dado que el servicio opera sobre HTTP y los navegadores bloquean el acceso al GPS y cámara por falta de HTTPS en IPs remotas, la demostración del frontend se ejecuta desde la máquina local (`localhost`), permitiendo el uso completo del hardware (Cámara/GPS) mientras interactúa en tiempo real con la base de datos de producción en AWS.
 
 
+
+---
+
+# Proyecto 2 — Perritos de la Calle (Módulo Funcional con Elixir)
+
+> **Materia:** Programación Lógica y Funcional  
+> **Profesor:** Daniel Varela  
+> **Semestre:** Unidad 2 — Paradigma Funcional con Elixir  
+
+---
+
+## 1. Integrantes y Funcionalidades del Proyecto 2
+
+| Integrante | Funcionalidad | Issue | Estado |
+| :--- | :--- | :--- | :--- |
+| **Ariel Hernández** | Funcionalidad 4: Zonas de concentración en el mapa | [#11](https://github.com/Ariel-Hdz-Gar/Proyecto-ProLog-Unidad1/issues/11) | Concluido |
+| **Santiago Martínez** | Funcionalidad 3: Estadísticas generales y conteos | [#12](https://github.com/Ariel-Hdz-Gar/Proyecto-ProLog-Unidad1/issues/12) | Concluido |
+| **Luis Palomares** | Funcionalidad 7: Perros perdidos de vista | [#13](https://github.com/Ariel-Hdz-Gar/Proyecto-ProLog-Unidad1/issues/13) | En desarrollo |
+
+---
+
+## 2. Del Proyecto 1 al Proyecto 2 (Arquitectura)
+
+En el Proyecto 1 la aplicación se ejecutaba de forma monolítica y nativa en la máquina host. En el Proyecto 2 la arquitectura evoluciona hacia microservicios orquestados con **Docker Compose**, un **Reverse Proxy con Nginx** y un **Túnel seguro de Cloudflare**:
+
+* **Frontend:** Servido estáticamente por contenedor Nginx en puerto 3000.
+* **Backend P1:** API FastAPI en Python ejecutándose en puerto 8000.
+* **Base de Datos:** PostgreSQL 15 en contenedor `bd`.
+* **Servicio Funcional (Elixir):** Servicio en Elixir 1.18 + Bandit en puerto 4000 con arquitectura de Núcleo Funcional Puro y Cáscara Imperativa/IO.
+* **Proxy (Nginx):** Única puerta de entrada (puerto 80). Enruta `/` al frontend, `/api/` a FastAPI y `/f/` al servicio de Elixir.
+* **Túnel Cloudflare (`cloudflared`):** Publica el puerto 80 del proxy a una URL pública segura HTTPS sin necesidad de abrir puertos en el router.
+
+### Cómo levantar el proyecto completo:
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Para obtener la URL pública del túnel:
+```bash
+docker compose logs tunel | grep trycloudflare
+```
+
+---
+
+## 3. Funcionalidad 3: Estadísticas Generales (Santiago Martínez - Issue #12)
+
+### Descripción
+Procesa de forma analítica todos los avistamientos registrados en la base de datos para generar métricas agregadas en tiempo real:
+* Conteos y porcentajes por raza.
+* Conteos y porcentajes por color principal.
+* Conteos por día de reporte.
+* Top $N$ de razas y colores más frecuentes.
+
+### Uso en la Aplicación
+En la barra superior del Frontend se incluye la pestaña **"Estadísticas"**. Al hacer clic:
+1. El cliente consulta de forma reactiva el endpoint `/f/estadisticas`.
+2. Muestra tarjetas con el total de perros registrados, la raza más común y el color más común.
+3. Renderiza barras de progreso visuales con los porcentajes de cada categoría.
+
+### Endpoint HTTP
+* **Ruta:** `GET /f/estadisticas`
+* **Respuesta Ejemplo (JSON):**
+```json
+{
+  "total_avistamientos": 15,
+  "top_razas": [
+    {"nombre": "Chihuahua", "total": 5},
+    {"nombre": "Pug", "total": 3}
+  ],
+  "top_colores": [
+    {"nombre": "Negro", "total": 7},
+    {"nombre": "Café", "total": 4}
+  ],
+  "por_raza": {
+    "Chihuahua": 5,
+    "Pug": 3,
+    "Sin raza definida": 7
+  },
+  "por_color": {
+    "Negro": 7,
+    "Café": 4,
+    "Blanco": 4
+  },
+  "por_dia": {
+    "2026-10-20": 4,
+    "2026-10-21": 11
+  }
+}
+```
+
+### Dónde están los Requisitos del Paradigma Funcional en el Código
+
+El núcleo puro se ubica estrictamente en `funcional/lib/perritos/estadisticas.ex` y cumple al 100% los criterios de evaluación:
+
+1. **Núcleo Puro vs Cáscara:**
+   * **Núcleo (`Perritos.Estadisticas`):** Módulo sin efectos secundarios. Solo recibe listas/mapas y regresa mapas agregados. No interactúa con BD, reloj ni red.
+   * **Cáscara (`Perritos.Datos` y `Perritos.Router`):** Maneja la conexión PostgreSQL vía `Postgrex` y traduce las peticiones HTTP con `Plug.Router`.
+2. **Cero Estado Mutable:**
+   No se utilizan `Agent`, `GenServer`, `ETS` ni variables mutables. Los acumuladores se generan mediante transformaciones inmutables (`Enum.reduce`).
+3. **Funciones de Orden Superior (Generadora y Consumidora):**
+   * **Generadora:** `criterio_extractor/1` regresa una función anónima adaptada al criterio solicitado (`:raza`, `:color`, `:fecha`).
+   * **Consumidora:** `contar_por/2` recibe una lista y una función extractora de aridad 1 (`extractor.()`) para clasificar dinámicamente los elementos.
+4. **Recursión Explícita:**
+   La función `tomar_recursivo/3` implementa recursión pura sobre la cabeza y la cola de la lista (`[cabeza | resto]`) con cláusulas de caso base para extraer el Top $N$ de elementos más frecuentes sin ciclos imperativos.
+5. **Pattern Matching y Cláusulas Múltiples:**
+   Implementado en las cabeceras de `resumen/1` (`[]` vs lista no vacía), en `tomar_recursivo/3` y en las funciones anónimas de extracción.
+6. **Composición con Pipelines (`|>`):**
+   Encadenamiento de transformaciones en `top_n/2` y `resumen/1`.
+7. **Pruebas Unitarias ExUnit y Casos Borde:**
+   Ubicadas en `funcional/test/estadisticas_test.exs`. Prueban casos borde como lista vacía, perros con raza `nil`, empate de frecuencias y $n$ mayor al total de elementos disponibles.
+8. **Documentación `@doc` y Doctests:**
+   Cada función pública incluye ejemplos reproducibles con `iex>` validados automáticamente por `ExUnit`.

@@ -49,6 +49,9 @@ function cambiarVista(viewId) {
   if (viewId === "vista-lista") {
     cargarListaYMapa();
   }
+  if (viewId === "vista-estadisticas") {
+    cargarEstadisticas();
+  }
 }
 
 // ============================================================
@@ -328,7 +331,12 @@ function pintarMapaGeneral(perritos) {
     if (layer instanceof L.Marker || layer instanceof L.Circle) window.mapaGeneral.removeLayer(layer);
   });
 
+  const idsPerdidos = new Set((perrosPerdidosCache || []).map(p => String(p.id || p.id_perrito)));
+
   perritos.forEach(p => {
+    const pId = String(p.id_perrito || p.id);
+    if (idsPerdidos.has(pId)) return;
+
     const marker = L.marker([p.latitud, p.longitud]).addTo(window.mapaGeneral);
     const colorNombre = nombrePorId(catalogoColores, p.id_color_principal) || "";
     marker.bindPopup(`
@@ -379,6 +387,69 @@ function pintarPerrosPerdidosEnMapa(perdidos) {
       </div>
     `);
   });
+}
+
+// ============================================================
+// ESTADÍSTICAS (Funcionalidad de Santiago)
+// ============================================================
+async function cargarEstadisticas() {
+  const msgEl = document.getElementById("stats-msg");
+  if (msgEl) msgEl.hidden = true;
+
+  try {
+    const url = (typeof ELIXIR_BASE !== "undefined" ? ELIXIR_BASE : "/f") + "/estadisticas";
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error("No se pudo obtener las estadísticas de Elixir.");
+    const data = await resp.json();
+
+    const elTotal = document.getElementById("stat-total");
+    if (elTotal) elTotal.textContent = data.total_avistamientos || 0;
+
+    const topRaza = data.top_razas && data.top_razas.length > 0 ? data.top_razas[0].nombre : "Sin datos";
+    const topColor = data.top_colores && data.top_colores.length > 0 ? data.top_colores[0].nombre : "Sin datos";
+
+    const elTopRaza = document.getElementById("stat-top-raza");
+    const elTopColor = document.getElementById("stat-top-color");
+    if (elTopRaza) elTopRaza.textContent = topRaza;
+    if (elTopColor) elTopColor.textContent = topColor;
+
+    renderizarBarras("chart-razas", data.top_razas, data.total_avistamientos);
+    renderizarBarras("chart-colores", data.top_colores, data.total_avistamientos);
+
+  } catch (err) {
+    if (msgEl) {
+      msgEl.textContent = "Error al conectar con el servicio Elixir (/f/estadisticas): " + err.message;
+      msgEl.className = "msg error";
+      msgEl.hidden = false;
+    }
+  }
+}
+
+function renderizarBarras(containerId, items, totalGeneral) {
+  const cont = document.getElementById(containerId);
+  if (!cont) return;
+  if (!items || items.length === 0 || !totalGeneral) {
+    cont.innerHTML = `<p class="hint">No hay datos suficientes para graficar.</p>`;
+    return;
+  }
+
+  const maxVal = Math.max(...items.map(i => i.total), 1);
+
+  cont.innerHTML = items.map(item => {
+    const porcentaje = Math.round((item.total / totalGeneral) * 100);
+    const anchoBarra = Math.round((item.total / maxVal) * 100);
+    return `
+      <div class="bar-row">
+        <div class="bar-info">
+          <span class="bar-name">${item.nombre}</span>
+          <span class="bar-val">${item.total} (${porcentaje}%)</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: ${anchoBarra}%;"></div>
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
 // ============================================================
