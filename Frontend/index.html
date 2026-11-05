@@ -21,6 +21,7 @@
   <button class="tab-btn active" data-view="vista-registro">Registrar</button>
   <button class="tab-btn" data-view="vista-mapa">Mapa</button>
   <button class="tab-btn" data-view="vista-lista">Lista</button>
+  <button class="tab-btn" data-view="vista-estadisticas">Estadísticas</button>
 </nav>
 
 <main>
@@ -94,6 +95,40 @@
     <h1>Perritos registrados</h1>
     <div id="lista-msg" class="msg" hidden></div>
     <div id="lista-perritos" class="card-list"></div>
+  </section>
+
+
+  <!-- ===================== VISTA: ESTADÍSTICAS ===================== -->
+  <section id="vista-estadisticas" class="view">
+    <h1>Estadísticas de la Comunidad</h1>
+    <p class="hint">Métricas en tiempo real procesadas con programación funcional pura en Elixir.</p>
+    <div id="stats-msg" class="msg" hidden></div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-num" id="stat-total">0</span>
+        <span class="stat-label">Total Reportados</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-text" id="stat-top-raza">—</span>
+        <span class="stat-label">Raza más común</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-text" id="stat-top-color">—</span>
+        <span class="stat-label">Color más común</span>
+      </div>
+    </div>
+
+    <div class="stats-charts">
+      <div class="chart-box">
+        <h3>Top Razas Registradas</h3>
+        <div id="chart-razas" class="bars-list">Cargando...</div>
+      </div>
+      <div class="chart-box">
+        <h3>Top Colores Registrados</h3>
+        <div id="chart-colores" class="bars-list">Cargando...</div>
+      </div>
+    </div>
   </section>
 
 </main>
