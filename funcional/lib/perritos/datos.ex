@@ -1,7 +1,7 @@
 defmodule Perritos.Datos do
   @moduledoc """
   Cáscara: acceso a datos (PostgreSQL).
-  Consulta la base de datos y transforma las filas SQL en structs de `Perritos.Avistamiento`.
+  Consulta la base de datos y transforma las filas SQL en structs y mapas para los núcleos puros.
   """
 
   alias Perritos.Avistamiento
@@ -24,7 +24,7 @@ defmodule Perritos.Datos do
   """
 
   @doc """
-  Obtiene todos los avistamientos registrados en la base de datos.
+  Obtiene todos los avistamientos registrados en la base de datos como structs de `Avistamiento`.
   """
   def avistamientos do
     case Postgrex.query(:bd, @consulta, []) do
@@ -33,6 +33,19 @@ defmodule Perritos.Datos do
 
       {:error, error} ->
         {:error, error}
+    end
+  end
+
+  @doc """
+  Obtiene coordenadas de avistamientos para el módulo de Zonas de Concentración.
+  """
+  def coordenadas do
+    case avistamientos() do
+      {:ok, lista} ->
+        {:ok, Enum.map(lista, fn a -> %{lat: a.lat, lon: a.lon} end)}
+
+      {:error, err} ->
+        {:error, err}
     end
   end
 
@@ -52,6 +65,7 @@ defmodule Perritos.Datos do
 
   defp convertir_decimal(%Decimal{} = d), do: Decimal.to_float(d)
   defp convertir_decimal(f) when is_float(f), do: f
+  defp convertir_decimal(n) when is_integer(n), do: n / 1
   defp convertir_decimal(_), do: 0.0
 
   defp convertir_fecha(%DateTime{} = dt), do: DateTime.to_naive(dt)

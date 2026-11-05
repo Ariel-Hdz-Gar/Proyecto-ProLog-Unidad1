@@ -8,12 +8,15 @@ defmodule Perritos.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      # 1. Conexión directa a PostgreSQL (Opción A) usando variables de entorno
       {Postgrex,
        name: :bd,
        hostname: System.get_env("BD_HOST", "bd"),
-       username: System.get_env("BD_USUARIO", "perritos"),
-       password: System.get_env("BD_PASSWORD", "cambiar"),
-       database: System.get_env("BD_NOMBRE", "perritos")},
+       username: System.get_env("DB_USER", System.get_env("BD_USUARIO", "perritos")),
+       password: System.get_env("DB_PASSWORD", System.get_env("BD_PASSWORD", "cambiar")),
+       database: System.get_env("DB_NAME", System.get_env("BD_NOMBRE", "perritos"))},
+
+      # 2. Servidor web que escucha en el puerto 4000 y usa el Router
       {Bandit, plug: Perritos.Router, port: 4000}
     ]
 

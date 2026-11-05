@@ -271,7 +271,6 @@ async function cargarListaYMapa() {
   if (perritosCache) {
     pintarLista(perritosCache);
     pintarMapaGeneral(perritosCache);
-    return;
   }
   try {
     const resp = await fetch(`${API_BASE}/api/perritos`);
@@ -320,7 +319,7 @@ function pintarMapaGeneral(perritos) {
       attribution: "&copy; OpenStreetMap"
     }).addTo(mapaGeneral);
   }
-  // Limpia pines anteriores antes de repintar
+  
   mapaGeneral.eachLayer(layer => {
     if (layer instanceof L.Marker) mapaGeneral.removeLayer(layer);
   });
@@ -334,6 +333,20 @@ function pintarMapaGeneral(perritos) {
       ${colorNombre}
     `);
   });
+
+  fetch(ELIXIR_BASE + '/zonas')
+    .then(response => response.json())
+    .then(zonas => {
+        zonas.forEach(zona => {
+            L.circle([zona.latitud, zona.longitud], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.3,
+                radius: zona.radio || 600
+            }).addTo(mapaGeneral);
+        });
+    })
+    .catch(error => console.error("Error al cargar zonas de Elixir:", error));
 }
 
 // ============================================================
