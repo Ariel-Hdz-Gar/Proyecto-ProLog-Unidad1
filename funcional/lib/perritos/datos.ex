@@ -6,7 +6,7 @@ defmodule Perritos.Datos do
 
   alias Perritos.Avistamiento
 
-  # Consulta con JOINs a los catálogos del Proyecto 1
+  # Consulta con JOINs a los catálogos del Proyecto 1, incluyendo todos los campos necesarios
   @consulta """
   SELECT
     p.id_perrito,
@@ -56,19 +56,26 @@ defmodule Perritos.Datos do
       raza: raza,
       color_principal: color_principal,
       colores: [color_principal],
-      lat: convertir_decimal(lat),
-      lon: convertir_decimal(lon),
+      lat: convertir_a_flotante(lat),
+      lon: convertir_a_flotante(lon),
       foto: foto,
-      fecha: convertir_fecha(fecha)
+      # Campo clave unificado para perros perdidos de vista y fecha general
+      fecha: parsear_fecha(fecha)
     }
   end
 
-  defp convertir_decimal(%Decimal{} = d), do: Decimal.to_float(d)
-  defp convertir_decimal(f) when is_float(f), do: f
-  defp convertir_decimal(n) when is_integer(n), do: n / 1
-  defp convertir_decimal(_), do: 0.0
+  defp convertir_a_flotante(%Decimal{} = num), do: Decimal.to_float(num)
+  defp convertir_a_flotante(num) when is_float(num), do: num
+  defp convertir_a_flotante(num) when is_integer(num), do: num / 1
+  defp convertir_a_flotante(_), do: 0.0
 
-  defp convertir_fecha(%DateTime{} = dt), do: DateTime.to_naive(dt)
-  defp convertir_fecha(%NaiveDateTime{} = ndt), do: ndt
-  defp convertir_fecha(_), do: NaiveDateTime.utc_now()
+  defp parsear_fecha(%DateTime{} = dt), do: DateTime.to_naive(dt)
+  defp parsear_fecha(%NaiveDateTime{} = dt), do: dt
+  defp parsear_fecha(str) when is_binary(str) do
+    case NaiveDateTime.from_iso8601(str) do
+      {:ok, dt} -> dt
+      _ -> NaiveDateTime.utc_now()
+    end
+  end
+  defp parsear_fecha(_), do: NaiveDateTime.utc_now()
 end

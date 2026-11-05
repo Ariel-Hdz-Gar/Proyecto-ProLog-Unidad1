@@ -1,28 +1,27 @@
 // ============================================================
 // app.js — Frontend de "Registro de Perritos de la Calle"
 // ============================================================
-// Depende de config.js (variable API_BASE) y Leaflet (cargado en index.html)
 window.onerror = function(mensaje, fuente, linea) {
     alert("Error en línea " + linea + ": " + mensaje);
 };
 
 function generarIdSeguro() {
-    // Si el navegador permite la función original (localhost o HTTPS), la usamos:
     if (window.crypto && window.crypto.randomUUID) {
         return window.crypto.randomUUID();
     }
-    // Si el navegador la bloquea (celular por HTTP), armamos un ID alternativo rápido:
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
+
 // ---------- Estado global ----------
-let idempotencyKey = generarIdSeguro();   // se regenera solo tras un envío exitoso
+let idempotencyKey = generarIdSeguro();
 let catalogoRazas = [];
 let catalogoColores = [];
-let ubicacionSeleccionada = null;           // { lat, lng }
+let ubicacionSeleccionada = null;
 
 let mapaRegistro, marcadorRegistro;
-let mapaGeneral;
+window.mapaGeneral = null; // Expuesto globalmente para evitar errores de scope
 let perritosCache = null;
+let perrosPerdidosCache = null;
 
 // ============================================================
 // NAVEGACIÓN ENTRE VISTAS
@@ -39,9 +38,12 @@ function cambiarVista(viewId) {
 
   if (viewId === "vista-mapa") {
     cargarListaYMapa().then(() => {
-      // Leaflet necesita saber su tamaño real cuando el contenedor
-      // estaba oculto (display:none) al inicializarse.
-      if (mapaGeneral) setTimeout(() => mapaGeneral.invalidateSize(), 50);
+      if (window.mapaGeneral) {
+        setTimeout(() => {
+          window.mapaGeneral.invalidateSize();
+          cargarPerrosPerdidosVista();
+        }, 50);
+      }
     });
   }
   if (viewId === "vista-lista") {
@@ -68,15 +70,20 @@ async function cargarCatalogos() {
     catalogoRazas = data.razas || [];
     catalogoColores = data.colores || [];
 
-    selectRaza.innerHTML = `<option value="">Sin especificar</option>` +
-      catalogoRazas.map(r => `<option value="${r.id}">${r.nombre}</option>`).join("");
+    if (selectRaza) {
+      selectRaza.innerHTML = `<option value="">Sin especificar</option>` +
+        catalogoRazas.map(r => `<option value="${r.id}">${r.nombre}</option>`).join("");
+    }
 
     const opcionesColor = `<option value="">Selecciona…</option>` +
       catalogoColores.map(c => `<option value="${c.id}">${c.nombre}</option>`).join("");
-    selectColorPrincipal.innerHTML = opcionesColor;
-    selectExtra1.innerHTML = `<option value="">Ninguno</option>` +
-      catalogoColores.map(c => `<option value="${c.id}">${c.nombre}</option>`).join("");
-    selectExtra2.innerHTML = selectExtra1.innerHTML;
+    
+    if (selectColorPrincipal) selectColorPrincipal.innerHTML = opcionesColor;
+    if (selectExtra1) {
+      selectExtra1.innerHTML = `<option value="">Ninguno</option>` +
+        catalogoColores.map(c => `<option value="${c.id}">${c.nombre}</option>`).join("");
+    }
+    if (selectExtra2) selectExtra2.innerHTML = selectExtra1.innerHTML;
 
   } catch (err) {
     mostrarMensaje("registro-msg",
@@ -85,11 +92,13 @@ async function cargarCatalogos() {
   }
 }
 
-// Evita que el usuario repita un color entre principal / extra1 / extra2
 function actualizarColoresDisponibles() {
-  const principal = document.getElementById("input-color-principal").value;
+  const principalEl = document.getElementById("input-color-principal");
   const extra1 = document.getElementById("input-color-extra-1");
   const extra2 = document.getElementById("input-color-extra-2");
+  if (!principalEl || !extra1 || !extra2) return;
+
+  const principal = principalEl.value;
   const valExtra1 = extra1.value;
   const valExtra2 = extra2.value;
 
@@ -103,32 +112,42 @@ function actualizarColoresDisponibles() {
         .join("");
   });
 }
-document.getElementById("input-color-principal").addEventListener("change", actualizarColoresDisponibles);
-document.getElementById("input-color-extra-1").addEventListener("change", actualizarColoresDisponibles);
-document.getElementById("input-color-extra-2").addEventListener("change", actualizarColoresDisponibles);
+
+const colorPrinEl = document.getElementById("input-color-principal");
+if (colorPrinEl) colorPrinEl.addEventListener("change", actualizarColoresDisponibles);
+const colorExt1El = document.getElementById("input-color-extra-1");
+if (colorExt1El) colorExt1El.addEventListener("change", actualizarColoresDisponibles);
+const colorExt2El = document.getElementById("input-color-extra-2");
+if (colorExt2El) colorExt2El.addEventListener("change", actualizarColoresDisponibles);
 
 // ============================================================
-// FOTO — cámara o galería, con vista previa
+// FOTO
 // ============================================================
 const inputFoto = document.getElementById("input-foto");
 const previewFoto = document.getElementById("preview-foto");
 
-inputFoto.addEventListener("change", () => {
-  const archivo = inputFoto.files[0];
-  if (!archivo) {
-    previewFoto.hidden = true;
-    return;
-  }
-  previewFoto.src = URL.createObjectURL(archivo);
-  previewFoto.hidden = false;
-  document.getElementById("err-foto").textContent = "";
-});
+if (inputFoto && previewFoto) {
+  inputFoto.addEventListener("change", () => {
+    const archivo = inputFoto.files[0];
+    if (!archivo) {
+      previewFoto.hidden = true;
+      return;
+    }
+    previewFoto.src = URL.createObjectURL(archivo);
+    previewFoto.hidden = false;
+    const errFoto = document.getElementById("err-foto");
+    if (errFoto) errFoto.textContent = "";
+  });
+}
 
 // ============================================================
-// MAPA DE REGISTRO — pin arrastrable + geolocalización
+// MAPA DE REGISTRO
 // ============================================================
 function iniciarMapaRegistro() {
-  mapaRegistro = L.map("mapa-registro").setView([25.4232, -101.0053], 13); // Saltillo por defecto
+  const mapElem = document.getElementById("mapa-registro");
+  if (!mapElem) return;
+
+  mapaRegistro = L.map("mapa-registro").setView([25.4232, -101.0053], 13);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; OpenStreetMap"
@@ -139,130 +158,100 @@ function iniciarMapaRegistro() {
   marcadorRegistro.on("dragend", () => {
     const pos = marcadorRegistro.getLatLng();
     ubicacionSeleccionada = { lat: pos.lat, lng: pos.lng };
-    document.getElementById("err-ubicacion").textContent = "";
+    const errUbicacion = document.getElementById("err-ubicacion");
+    if (errUbicacion) errUbicacion.textContent = "";
   });
 
   mapaRegistro.on("click", (e) => {
     marcadorRegistro.setLatLng(e.latlng);
     ubicacionSeleccionada = { lat: e.latlng.lat, lng: e.latlng.lng };
-    document.getElementById("err-ubicacion").textContent = "";
+    const errUbicacion = document.getElementById("err-ubicacion");
+    if (errUbicacion) errUbicacion.textContent = "";
   });
 }
 
-document.getElementById("btn-mi-ubicacion").addEventListener("click", () => {
-  if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const { latitude, longitude } = pos.coords;
-      ubicacionSeleccionada = { lat: latitude, lng: longitude };
-      mapaRegistro.setView([latitude, longitude], 16);
-      marcadorRegistro.setLatLng([latitude, longitude]);
-      document.getElementById("err-ubicacion").textContent = "";
-    },
-    () => {
-      mostrarMensaje("registro-msg",
-        "No se pudo obtener tu ubicación. Revisa los permisos del navegador, o mueve el pin a mano tocando el mapa. " +
-        "Recuerda: esto solo funciona en HTTPS o localhost.", "error");
+const btnMiUbicacion = document.getElementById("btn-mi-ubicacion");
+if (btnMiUbicacion) {
+  btnMiUbicacion.addEventListener("click", () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          ubicacionSeleccionada = { lat: latitude, lng: longitude };
+          mapaRegistro.setView([latitude, longitude], 16);
+          marcadorRegistro.setLatLng([latitude, longitude]);
+          const errUbicacion = document.getElementById("err-ubicacion");
+          if (errUbicacion) errUbicacion.textContent = "";
+        },
+        () => {
+          mostrarMensaje("registro-msg", "No se pudo obtener tu ubicación.", "error");
+        }
+      );
     }
-  );
-} else {
-  // Entra aquí cuando el celular elimina el GPS por estar en HTTP
-  console.warn("GPS desactivado por falta de HTTPS.");
-  mostrarMensaje("registro-msg", "El navegador bloqueó el GPS automático. Mueve el pin en el mapa manualmente.", "error");
+  });
 }
-});
 
 // ============================================================
 // ENVÍO DEL FORMULARIO
 // ============================================================
 const form = document.getElementById("form-registro");
+if (form) {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    limpiarErrores();
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  limpiarErrores();
+    if (!idempotencyKey) idempotencyKey = generarIdSeguro();
 
-  if (!idempotencyKey) {
-    idempotencyKey = generarIdSeguro();
-  }
+    const nombre = document.getElementById("input-nombre").value.trim();
+    const idRaza = document.getElementById("input-raza").value;
+    const idColorPrincipal = document.getElementById("input-color-principal").value;
+    const colorExtra1 = document.getElementById("input-color-extra-1").value;
+    const colorExtra2 = document.getElementById("input-color-extra-2").value;
+    const archivoFoto = inputFoto ? inputFoto.files[0] : null;
 
-  const nombre = document.getElementById("input-nombre").value.trim();
-  const idRaza = document.getElementById("input-raza").value;
-  const idColorPrincipal = document.getElementById("input-color-principal").value;
-  const colorExtra1 = document.getElementById("input-color-extra-1").value;
-  const colorExtra2 = document.getElementById("input-color-extra-2").value;
-  const archivoFoto = inputFoto.files[0];
+    let valido = true;
+    if (!archivoFoto) { document.getElementById("err-foto").textContent = "Falta la foto."; valido = false; }
+    if (!nombre) { document.getElementById("err-nombre").textContent = "Falta el nombre."; valido = false; }
+    if (!idColorPrincipal) { document.getElementById("err-color-principal").textContent = "Elige un color."; valido = false; }
+    if (!ubicacionSeleccionada) { document.getElementById("err-ubicacion").textContent = "Falta marcar ubicación."; valido = false; }
+    if (!valido) return;
 
-  let valido = true;
+    const btn = document.getElementById("btn-enviar");
+    btn.disabled = true;
+    btn.textContent = "Guardando…";
 
-  if (!archivoFoto) {
-    document.getElementById("err-foto").textContent = "Falta la foto.";
-    valido = false;
-  }
-  if (!nombre) {
-    document.getElementById("err-nombre").textContent = "Falta el nombre.";
-    valido = false;
-  }
-  if (!idColorPrincipal) {
-    document.getElementById("err-color-principal").textContent = "Elige un color principal.";
-    valido = false;
-  }
-  if (!ubicacionSeleccionada) {
-    document.getElementById("err-ubicacion").textContent = "Falta marcar la ubicación en el mapa.";
-    valido = false;
-  }
-  if (!valido) return;
+    const datos = new FormData();
+    datos.append("idempotency_key", idempotencyKey);
+    datos.append("nombre", nombre);
+    datos.append("latitud", ubicacionSeleccionada.lat);
+    datos.append("longitud", ubicacionSeleccionada.lng);
+    datos.append("id_color_principal", idColorPrincipal);
+    if (idRaza) datos.append("id_raza", idRaza);
+    [colorExtra1, colorExtra2].forEach(c => { if (c) datos.append("colores_adicionales", c); });
+    datos.append("foto", archivoFoto);
 
-  const btn = document.getElementById("btn-enviar");
-  btn.disabled = true;
-  btn.textContent = "Guardando…";
-
-  // IMPORTANTE: idempotency_key va DENTRO del FormData, como campo normal,
-  // porque así lo espera el backend (idempotency_key: str = Form(...)).
-  // NO va como header — un header no llega a ese parámetro.
-  const datos = new FormData();
-  datos.append("idempotency_key", idempotencyKey);
-  datos.append("nombre", nombre);
-  datos.append("latitud", ubicacionSeleccionada.lat);
-  datos.append("longitud", ubicacionSeleccionada.lng);
-  datos.append("id_color_principal", idColorPrincipal);
-  if (idRaza) datos.append("id_raza", idRaza);
-  [colorExtra1, colorExtra2].forEach(c => {
-    if (c) datos.append("colores_adicionales", c);
-  });
-  datos.append("foto", archivoFoto);
-
-  try {
-    // Ojo: la ruta lleva /api/perritos, no /perritos.
-    const resp = await fetch(`${API_BASE}/api/perritos`, { method: "POST", body: datos });
-    if (!resp.ok) {
-      const errData = await resp.json().catch(() => ({}));
-      throw new Error(errData.detail || "El servidor rechazó el registro.");
+    try {
+      const resp = await fetch(`${API_BASE}/api/perritos`, { method: "POST", body: datos });
+      if (!resp.ok) throw new Error("El servidor rechazó el registro.");
+      mostrarMensaje("registro-msg", "¡Perrito registrado con éxito!", "ok");
+      form.reset();
+      previewFoto.hidden = true;
+      idempotencyKey = generarIdSeguro();
+      ubicacionSeleccionada = null;
+      perritosCache = null;
+      perrosPerdidosCache = null;
+    } catch (err) {
+      mostrarMensaje("registro-msg", err.message || "Error de conexión.", "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Guardar registro";
     }
-    mostrarMensaje("registro-msg", "¡Perrito registrado con éxito!", "ok");
-    form.reset();
-    previewFoto.hidden = true;
-    idempotencyKey = generarIdSeguro(); // nueva key para el siguiente registro
-    ubicacionSeleccionada = null;
-    perritosCache = null; // fuerza a recargar la lista/mapa con el nuevo perrito
-  } catch (err) {
-    mostrarMensaje("registro-msg", err.message || "No se pudo conectar con el servidor.", "error");
-    // OJO: la idempotency_key NO se regenera aquí a propósito.
-    // Si el usuario reintenta, se manda la misma key y el backend
-    // no debe crear un segundo registro duplicado.
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Guardar registro";
-  }
-});
+  });
+}
 
 // ============================================================
-// LISTA + MAPA GENERAL
+// LISTA, MAPA Y PERROS PERDIDOS DE VISTA
 // ============================================================
-
-// El backend regresa id_raza / id_color_principal como NÚMEROS (SELECT * crudo),
-// no como nombres. Los traducimos aquí usando los catálogos que ya cargamos
-// para el formulario. Si en algún momento Ariel agrega el JOIN en el backend
-// y regresa el nombre directo, esta función simplemente deja de usarse.
 function nombrePorId(catalogo, id) {
   if (id === null || id === undefined || id === "") return null;
   const item = catalogo.find(c => String(c.id) === String(id));
@@ -270,7 +259,7 @@ function nombrePorId(catalogo, id) {
 }
 
 async function cargarListaYMapa() {
-  await catalogosPromise; // asegura que catalogoRazas/catalogoColores ya estén listos
+  await catalogosPromise; 
   if (perritosCache) {
     pintarLista(perritosCache);
     pintarMapaGeneral(perritosCache);
@@ -282,14 +271,26 @@ async function cargarListaYMapa() {
     pintarLista(perritosCache);
     pintarMapaGeneral(perritosCache);
   } catch (err) {
-    mostrarMensaje("lista-msg",
-      "No se pudo cargar la lista de perritos. Revisa que el backend esté corriendo y tenga el endpoint GET /api/perritos.",
-      "error");
+    console.error("Error al cargar perritos:", err);
+  }
+
+  await cargarPerrosPerdidosVista();
+}
+
+async function cargarPerrosPerdidosVista() {
+  try {
+    const resp = await fetch(`${ELIXIR_BASE}/perros-perdidos?dias=7`);
+    if (!resp.ok) throw new Error("Error al obtener perros perdidos de vista");
+    perrosPerdidosCache = await resp.json();
+    pintarPerrosPerdidosEnMapa(perrosPerdidosCache);
+  } catch (err) {
+    console.error("No se pudieron cargar los perros perdidos de vista:", err);
   }
 }
 
 function pintarLista(perritos) {
   const cont = document.getElementById("lista-perritos");
+  if (!cont) return;
   if (!perritos || perritos.length === 0) {
     cont.innerHTML = `<p class="hint">Todavía no hay perritos registrados.</p>`;
     return;
@@ -316,19 +317,27 @@ function pintarLista(perritos) {
 }
 
 function pintarMapaGeneral(perritos) {
-  if (!mapaGeneral) {
-    mapaGeneral = L.map("mapa-general").setView([25.4232, -101.0053], 12);
+  const mapGeneralElem = document.getElementById("mapa-general");
+  if (!mapGeneralElem) return;
+
+  if (!window.mapaGeneral) {
+    window.mapaGeneral = L.map("mapa-general").setView([25.4232, -101.0053], 12);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap"
-    }).addTo(mapaGeneral);
+    }).addTo(window.mapaGeneral);
   }
   
-  mapaGeneral.eachLayer(layer => {
-    if (layer instanceof L.Marker) mapaGeneral.removeLayer(layer);
+  window.mapaGeneral.eachLayer(layer => {
+    if (layer instanceof L.Marker || layer instanceof L.Circle) window.mapaGeneral.removeLayer(layer);
   });
 
+  const idsPerdidos = new Set((perrosPerdidosCache || []).map(p => String(p.id || p.id_perrito)));
+
   perritos.forEach(p => {
-    const marker = L.marker([p.latitud, p.longitud]).addTo(mapaGeneral);
+    const pId = String(p.id_perrito || p.id);
+    if (idsPerdidos.has(pId)) return;
+
+    const marker = L.marker([p.latitud, p.longitud]).addTo(window.mapaGeneral);
     const colorNombre = nombrePorId(catalogoColores, p.id_color_principal) || "";
     marker.bindPopup(`
       <strong>${p.nombre}</strong><br>
@@ -337,7 +346,7 @@ function pintarMapaGeneral(perritos) {
     `);
   });
 
-  fetch(ELIXIR_BASE + '/zonas')
+  fetch(`${ELIXIR_BASE}/zonas`)
     .then(response => response.json())
     .then(zonas => {
         zonas.forEach(zona => {
@@ -346,54 +355,42 @@ function pintarMapaGeneral(perritos) {
                 fillColor: '#f03',
                 fillOpacity: 0.3,
                 radius: zona.radio || 600
-            }).addTo(mapaGeneral);
+            }).addTo(window.mapaGeneral);
         });
     })
     .catch(error => console.error("Error al cargar zonas de Elixir:", error));
+
+  if (perrosPerdidosCache) {
+    pintarPerrosPerdidosEnMapa(perrosPerdidosCache);
+  }
+}
+
+function pintarPerrosPerdidosEnMapa(perdidos) {
+  if (!window.mapaGeneral || !perdidos) return;
+
+  perdidos.forEach(p => {
+    const iconoPerdido = L.divIcon({
+      className: 'custom-lost-marker',
+      html: '<div style="background-color: #f59e0b; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.4);"></div>',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8]
+    });
+
+    const marker = L.marker([p.lat, p.lon], { icon: iconoPerdido }).addTo(window.mapaGeneral);
+    
+    marker.bindPopup(`
+      <div style="text-align: center;">
+        <strong style="color: #d97706;">⚠️ Perdido de vista (>7 días)</strong><br>
+        <strong>${p.nombre || 'Sin nombre'}</strong><br>
+        <img src="${API_BASE}/api/imagenes/${p.foto}" style="width:90px;border-radius:6px;margin-top:4px;"><br>
+        <span style="font-size: 11px; color: #666;">Registrado hace más de una semana</span>
+      </div>
+    `);
+  });
 }
 
 // ============================================================
-// MODAL DE DETALLE
-// ============================================================
-function abrirDetalle(perrito) {
-  if (!perrito) return;
-  const razaNombre = nombrePorId(catalogoRazas, perrito.id_raza) || "Sin raza definida";
-  const colorNombre = nombrePorId(catalogoColores, perrito.id_color_principal) || "—";
-  document.getElementById("detalle-foto").src = `${API_BASE}/api/imagenes/${perrito.foto_ruta}`;
-  document.getElementById("detalle-nombre").textContent = perrito.nombre;
-  document.getElementById("detalle-raza").textContent = razaNombre;
-  // NOTA: el backend aún no regresa los colores adicionales (viven en otra
-  // tabla y el SELECT actual no las trae). Por ahora solo mostramos el
-  // color principal. Pídele a Ariel un JOIN o un segundo query si los quieren aquí.
-  document.getElementById("detalle-colores").textContent = colorNombre;
-  document.getElementById("detalle-fecha").textContent = perrito.fecha_registro || "—";
-  document.getElementById("modal-detalle").hidden = false;
-}
-document.getElementById("cerrar-modal").addEventListener("click", () => {
-  document.getElementById("modal-detalle").hidden = true;
-});
-
-// ============================================================
-// UTILIDADES
-// ============================================================
-function mostrarMensaje(elId, texto, tipo) {
-  const el = document.getElementById(elId);
-  el.textContent = texto;
-  el.className = `msg ${tipo}`;
-  el.hidden = false;
-}
-function limpiarErrores() {
-  document.querySelectorAll(".error").forEach(e => e.textContent = "");
-  document.getElementById("registro-msg").hidden = true;
-}
-
-// ============================================================
-// INICIO
-// ============================================================
-const catalogosPromise = cargarCatalogos(); // se usa para esperar catálogos antes de pintar lista/mapa
-iniciarMapaRegistro();
-// ============================================================
-// ESTADÍSTICAS (Funcionalidad 3 en Elixir - Santiago Martínez)
+// ESTADÍSTICAS (Funcionalidad de Santiago)
 // ============================================================
 async function cargarEstadisticas() {
   const msgEl = document.getElementById("stats-msg");
@@ -454,3 +451,58 @@ function renderizarBarras(containerId, items, totalGeneral) {
     `;
   }).join("");
 }
+
+// ============================================================
+// MODAL DE DETALLE Y UTILIDADES
+// ============================================================
+function abrirDetalle(perrito) {
+  if (!perrito) return;
+  const razaNombre = nombrePorId(catalogoRazas, perrito.id_raza) || "Sin raza definida";
+  const colorNombre = nombrePorId(catalogoColores, perrito.id_color_principal) || "—";
+  
+  const detFoto = document.getElementById("detalle-foto");
+  if (detFoto) detFoto.src = `${API_BASE}/api/imagenes/${perrito.foto_ruta}`;
+  
+  const detNombre = document.getElementById("detalle-nombre");
+  if (detNombre) detNombre.textContent = perrito.nombre;
+  
+  const detRaza = document.getElementById("detalle-raza");
+  if (detRaza) detRaza.textContent = razaNombre;
+  
+  const detColores = document.getElementById("detalle-colores");
+  if (detColores) detColores.textContent = colorNombre;
+  
+  const detFecha = document.getElementById("detalle-fecha");
+  if (detFecha) detFecha.textContent = perrito.fecha_registro || "—";
+  
+  const modalDetalle = document.getElementById("modal-detalle");
+  if (modalDetalle) modalDetalle.hidden = false;
+}
+
+const cerrarModalBtn = document.getElementById("cerrar-modal");
+if (cerrarModalBtn) {
+  cerrarModalBtn.addEventListener("click", () => {
+    const modalDetalle = document.getElementById("modal-detalle");
+    if (modalDetalle) modalDetalle.hidden = true;
+  });
+}
+
+function mostrarMensaje(elId, texto, tipo) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent = texto;
+  el.className = `msg ${tipo}`;
+  el.hidden = false;
+}
+
+function limpiarErrores() {
+  document.querySelectorAll(".error").forEach(e => e.textContent = "");
+  const regMsg = document.getElementById("registro-msg");
+  if (regMsg) regMsg.hidden = true;
+}
+
+// ============================================================
+// INICIO
+// ============================================================
+const catalogosPromise = cargarCatalogos(); 
+iniciarMapaRegistro();

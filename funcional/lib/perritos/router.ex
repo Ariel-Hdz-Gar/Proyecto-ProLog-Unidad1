@@ -50,6 +50,34 @@ defmodule Perritos.Router do
     end
   end
 
+  # Tu funcionalidad: Perros perdidos de vista (>7 días)
+  get "/f/perros-perdidos" do
+    conn = fetch_query_params(conn)
+    
+    dias = 
+      case Map.get(conn.query_params, "dias") do
+        nil -> 7
+        val -> String.to_integer(val)
+      end
+
+    ahora = NaiveDateTime.local_now()
+
+    case Perritos.Datos.avistamientos() do
+      {:ok, avistamientos} ->
+        cuerpo =
+          avistamientos
+          |> Perritos.Perdidos.filtrar_perdidos(dias, ahora)
+          |> Jason.encode!()
+
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(200, cuerpo)
+
+      {:error, _} ->
+        send_resp(conn, 503, ~s({"error": "base de datos no disponible"}))
+    end
+  end
+
   match _ do
     send_resp(conn, 404, "no encontrado")
   end
