@@ -408,3 +408,151 @@ input[type="file"] {
   border-radius: 999px;
   transition: width 0.4s ease;
 }
+
+/* ==========================================================================
+   DASHBOARD DE PERRITOS PERDIDOS (Tarjetas y Modal)
+   ========================================================================== */
+
+/* Contenedor del grid de tarjetas */
+.perritos-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+
+/* Diseño de cada tarjeta */
+.perrito-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.perrito-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Contenedor de la foto dentro de la tarjeta */
+.perrito-img-wrapper {
+    width: 100%;
+    height: 200px;
+    position: relative;
+    background: #f4f4f4;
+}
+
+.perrito-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Etiqueta flotante con los días exactos */
+.badge-dias {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(231, 76, 60, 0.95);
+    color: white;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Textos de la tarjeta */
+.perrito-info {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.perrito-info h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #2c3e50;
+    font-weight: bold;
+}
+
+.perrito-info p {
+    margin: 0;
+    color: #34495e;
+    font-size: 0.95rem;
+}
+
+.perrito-info .ubicacion-preview {
+    font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   NUEVO MODAL (Detalles del perrito perdido)
+   ========================================================================== */
+
+.modal-overlay {
+    position: fixed;
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(3px);
+}
+
+.modal-card {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 450px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px; 
+    right: 15px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    width: 32px; 
+    height: 32px;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.close-modal:hover {
+    background: #c0392b;
+}
+
+#modal-content-perdidos h2 {
+    color: #2c3e50;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+#modal-content-perdidos p {
+    margin-bottom: 8px;
+    line-height: 1.5;
+    color: #444;
+}

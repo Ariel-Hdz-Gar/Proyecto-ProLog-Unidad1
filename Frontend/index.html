@@ -22,6 +22,8 @@
   <button class="tab-btn" data-view="vista-mapa">Mapa</button>
   <button class="tab-btn" data-view="vista-lista">Lista</button>
   <button class="tab-btn" data-view="vista-estadisticas">Estadísticas</button>
+  <!-- NUEVO BOTÓN: Dashboard de Perdidos -->
+  <button class="tab-btn" data-view="vista-perdidos">Perdidos de Vista</button>
 </nav>
 
 <main>
@@ -97,7 +99,6 @@
     <div id="lista-perritos" class="card-list"></div>
   </section>
 
-
   <!-- ===================== VISTA: ESTADÍSTICAS ===================== -->
   <section id="vista-estadisticas" class="view">
     <h1>Estadísticas de la Comunidad</h1>
@@ -131,9 +132,16 @@
     </div>
   </section>
 
+  <!-- ===================== NUEVA VISTA: PERDIDOS ===================== -->
+  <section id="vista-perdidos" class="view">
+    <h1>Dashboard de Perritos Perdidos de Vista</h1>
+    <p class="hint">Monitoreo detallado del tiempo transcurrido desde su último avistamiento.</p>
+    <div id="perritos-grid" class="perritos-grid-container"></div>
+  </section>
+
 </main>
 
-<!-- ===================== MODAL DETALLE ===================== -->
+<!-- ===================== MODAL DETALLE ORIGINAL ===================== -->
 <div id="modal-detalle" class="modal" hidden>
   <div class="modal-content">
     <button id="cerrar-modal" class="close-btn" aria-label="Cerrar">✕</button>
@@ -145,7 +153,17 @@
   </div>
 </div>
 
+<!-- ===================== NUEVO MODAL: DASHBOARD PERDIDOS ===================== -->
+<div id="perrito-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-card">
+    <button class="close-modal" onclick="cerrarModalPerdidos()">✕</button>
+    <div id="modal-content-perdidos">
+      <!-- Se llena dinámicamente con JS -->
+    </div>
+  </div>
+</div>
+
 <script src="config.js"></script>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script> <!-- Le subí la versión a v=8 para limpiar caché al probar -->
 </body>
 </html>
