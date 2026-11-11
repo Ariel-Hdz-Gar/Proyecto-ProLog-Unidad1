@@ -52,6 +52,9 @@ function cambiarVista(viewId) {
   if (viewId === "vista-estadisticas") {
     cargarEstadisticas();
   }
+  if (viewId === "vista-perdidos") {
+    cargarDashboardPerdidos();
+  }
 }
 
 // ============================================================
@@ -250,7 +253,7 @@ if (form) {
 }
 
 // ============================================================
-// LISTA, MAPA Y PERROS PERDIDOS DE VISTA
+// LISTA Y MAPA
 // ============================================================
 function nombrePorId(catalogo, id) {
   if (id === null || id === undefined || id === "") return null;
@@ -390,6 +393,97 @@ function pintarPerrosPerdidosEnMapa(perdidos) {
 }
 
 // ============================================================
+// DASHBOARD: PERRITOS PERDIDOS (NUEVO)
+// ============================================================
+async function cargarDashboardPerdidos() {
+  const container = document.getElementById('perritos-grid');
+  if (!container) return;
+  
+  // Limpiamos el grid
+  container.innerHTML = '<p class="hint">Cargando datos...</p>';
+  
+  try {
+      const resp = await fetch(`${ELIXIR_BASE}/perros-perdidos?dias=7`);
+      if (!resp.ok) throw new Error("Error al obtener los datos");
+      
+      const perritos = await resp.json();
+      container.innerHTML = '';
+      
+      if (perritos.length === 0) {
+          container.innerHTML = '<p class="hint">No hay perritos con más de 7 días perdidos de vista.</p>';
+          return;
+      }
+
+      perritos.forEach(perrito => {
+          const card = document.createElement('div');
+          card.className = 'perrito-card';
+          
+          // CORRECCIÓN 1: Leemos foto_ruta tal como viene de tu BD
+          const fotoReal = perrito.foto_ruta || perrito.foto;
+          const fotoUrl = fotoReal ? `${API_BASE}/api/imagenes/${fotoReal}` : 'Images/perrito_001.webp';
+          
+          // CORRECCIÓN 2: Tomamos latitud y longitud para armar la ubicación
+          const lat = perrito.latitud || perrito.lat;
+          const lon = perrito.longitud || perrito.lon;
+          let zonaTexto = perrito.zona || perrito.ubicacion;
+
+          if (!zonaTexto && lat && lon) {
+              // Creamos un link a Google Maps súper útil en vez de "Zona desconocida"
+              zonaTexto = `<a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" style="color: #e74c3c; text-decoration: none; font-weight: bold;">📍 Ver ubicación exacta</a>`;
+          } else if (!zonaTexto) {
+              zonaTexto = '📍 Zona desconocida';
+          }
+
+          const diasTexto = perrito.dias_exactos ? perrito.dias_exactos : '> 7';
+
+          card.innerHTML = `
+              <div class="perrito-img-wrapper">
+                  <img src="${fotoUrl}" alt="${perrito.nombre}">
+                  <span class="badge-dias">Hace ${diasTexto} días</span>
+              </div>
+              <div class="perrito-info">
+                  <h3>${perrito.nombre || 'Sin nombre'}</h3>
+                  <p class="ubicacion-preview">${zonaTexto}</p>
+                  <p style="font-size: 0.8rem; color: #95a5a6; margin-top: 5px;">Último avistamiento hace ${diasTexto} días</p>
+              </div>
+          `;
+
+          // Al modal le pasamos los textos ya procesados
+          card.addEventListener('click', () => abrirModalPerdidos(perrito, fotoUrl, zonaTexto, diasTexto));
+          container.appendChild(card);
+      });
+  } catch (error) {
+      console.error("Error al cargar el dashboard de perdidos:", error);
+      container.innerHTML = `<p class="hint error">Ocurrió un error al cargar los reportes.</p>`;
+  }
+}
+
+function abrirModalPerdidos(perrito, fotoUrl, zonaTexto, diasTexto) {
+  const modalContent = document.getElementById('modal-content-perdidos');
+  if (!modalContent) return;
+
+  const fechaTexto = perrito.fecha_ultimo_avistamiento || perrito.fecha || 'Fecha no registrada';
+  const descTexto = perrito.descripcion || 'Sin descripción adicional.';
+  const contactoTexto = perrito.contacto || 'No especificado';
+
+  modalContent.innerHTML = `
+      <div style="text-align: center; margin-bottom: 15px;">
+          <img src="${fotoUrl}" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 10px;">
+      </div>
+      <h2>${perrito.nombre || 'Sin nombre'}</h2>
+      <p><strong>🕒 Se vio por última vez:</strong> hace ${diasTexto} días (${fechaTexto})</p>
+      <p><strong>📍 Zona / Ubicación:</strong> ${zonaTexto}</p>
+      <p><strong>📝 Descripción:</strong> ${descTexto}</p>
+      <p><strong>📞 Contacto:</strong> ${contactoTexto}</p>
+  `;
+  document.getElementById('perrito-modal').style.display = 'flex';
+}
+
+function cerrarModalPerdidos() {
+  document.getElementById('perrito-modal').style.display = 'none';
+}
+
+// ============================================================
 // ESTADÍSTICAS (Funcionalidad de Santiago)
 // ============================================================
 async function cargarEstadisticas() {
@@ -453,7 +547,7 @@ function renderizarBarras(containerId, items, totalGeneral) {
 }
 
 // ============================================================
-// MODAL DE DETALLE Y UTILIDADES
+// MODAL DE DETALLE Y UTILIDADES (Para la lista normal)
 // ============================================================
 function abrirDetalle(perrito) {
   if (!perrito) return;

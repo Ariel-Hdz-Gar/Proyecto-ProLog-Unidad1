@@ -1,7 +1,7 @@
 defmodule Perritos.Perdidos do
   @moduledoc """
   Núcleo de la funcionalidad *Perros perdidos de vista*.
-  Filtra y ordena los avistamientos que no se han reportado en N días.
+  Filtra, ordena y calcula los días exactos de los avistamientos que no se han reportado en N días.
   """
 
   @doc """
@@ -18,11 +18,20 @@ defmodule Perritos.Perdidos do
 
   @doc """
   Filtra los perritos cuyo último avistamiento sea mayor o igual al `dias_limite`.
+  Inyecta el campo `:dias_exactos` para ser consumido por el Front-End.
   Recibe una lista de avistamientos, el límite de días y la fecha actual (inyectada para mantener la pureza).
   """
   def filtrar_perdidos(avistamientos, dias_limite \\ 7, ahora) do
     avistamientos
     |> Enum.filter(fn a -> dias_transcurridos(a.fecha, ahora) >= dias_limite end)
-    |> Enum.sort_by(& &1.fecha, {:asc, NaiveDateTime})
+    |> Enum.map(fn a ->
+      dias = dias_transcurridos(a.fecha, ahora)
+      
+      # Convertimos a mapa regular (si es un struct de Ecto u otro) para permitir nuevas llaves
+      registro = if is_struct(a), do: Map.from_struct(a), else: a
+      
+      Map.put(registro, :dias_exactos, dias)
+    end)
+    |> Enum.sort_by(&Map.get(&1, :fecha), {:asc, NaiveDateTime})
   end
 end
